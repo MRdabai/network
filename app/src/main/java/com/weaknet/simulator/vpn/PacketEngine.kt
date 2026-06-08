@@ -23,7 +23,8 @@ class PacketEngine(
         val profile = profileFlow.value
         updateBucketsIfNeeded(profile)
 
-        if (profile.lossRate > 0 && Random.nextFloat() < profile.lossRate) {
+        val halfLoss = profile.lossRate / 2f
+        if (halfLoss > 0 && Random.nextFloat() < halfLoss) {
             updateStats { it.copy(droppedPackets = it.droppedPackets + 1) }
             return false
         }
@@ -56,7 +57,8 @@ class PacketEngine(
         val profile = profileFlow.value
         updateBucketsIfNeeded(profile)
 
-        if (profile.lossRate > 0 && Random.nextFloat() < profile.lossRate) {
+        val halfLoss = profile.lossRate / 2f
+        if (halfLoss > 0 && Random.nextFloat() < halfLoss) {
             updateStats { it.copy(droppedPackets = it.droppedPackets + 1) }
             return false
         }
@@ -91,8 +93,8 @@ class PacketEngine(
 
     private fun computeDelay(profile: NetworkProfile): Long {
         if (profile.latencyMs <= 0 && profile.jitterMs <= 0) return 0
-        val base = profile.latencyMs.toLong()
-        val jitter = if (profile.jitterMs > 0) Random.nextInt(profile.jitterMs).toLong() else 0
+        val base = profile.latencyMs.toLong() / 2
+        val jitter = if (profile.jitterMs > 0) Random.nextInt(profile.jitterMs).toLong() / 2 else 0
         return base + jitter
     }
 
