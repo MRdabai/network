@@ -188,6 +188,7 @@ fun StatItem(label: String, value: String) {
     }
 }
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileGrid(currentProfile: NetworkProfile, onSelect: (NetworkProfile) -> Unit) {
     val profiles = NetworkProfile.PRESETS
