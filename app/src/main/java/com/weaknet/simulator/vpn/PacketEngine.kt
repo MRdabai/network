@@ -23,18 +23,10 @@ class PacketEngine(
         val profile = profileFlow.value
         updateBucketsIfNeeded(profile)
 
-        val halfLoss = profile.lossRate / 2f
-        if (halfLoss > 0 && Random.nextFloat() < halfLoss) {
-            updateStats { it.copy(droppedPackets = it.droppedPackets + 1) }
-            return false
-        }
-
-        val networkDelay = computeDelay(profile)
         val shapingDelay = uplinkBucket.consume(length)
-        val totalDelay = networkDelay + shapingDelay
 
-        if (totalDelay > 0) {
-            uplinkQueue.enqueue(data.copyOf(length), length, totalDelay)
+        if (shapingDelay > 0) {
+            uplinkQueue.enqueue(data.copyOf(length), length, shapingDelay)
             updateStats {
                 it.copy(
                     uplinkPackets = it.uplinkPackets + 1,
@@ -50,15 +42,14 @@ class PacketEngine(
                 )
             }
         }
-        return totalDelay <= 0
+        return shapingDelay <= 0
     }
 
     fun processDownlinkPacket(data: ByteArray, length: Int): Boolean {
         val profile = profileFlow.value
         updateBucketsIfNeeded(profile)
 
-        val halfLoss = profile.lossRate / 2f
-        if (halfLoss > 0 && Random.nextFloat() < halfLoss) {
+        if (profile.lossRate > 0 && Random.nextFloat() < profile.lossRate) {
             updateStats { it.copy(droppedPackets = it.droppedPackets + 1) }
             return false
         }
@@ -93,8 +84,8 @@ class PacketEngine(
 
     private fun computeDelay(profile: NetworkProfile): Long {
         if (profile.latencyMs <= 0 && profile.jitterMs <= 0) return 0
-        val base = profile.latencyMs.toLong() / 2
-        val jitter = if (profile.jitterMs > 0) Random.nextInt(profile.jitterMs).toLong() / 2 else 0
+        val base = profile.latencyMs.toLong()
+        val jitter = if (profile.jitterMs > 0) Random.nextInt(profile.jitterMs).toLong() else 0
         return base + jitter
     }
 
