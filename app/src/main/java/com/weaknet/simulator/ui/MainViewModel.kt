@@ -64,6 +64,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         _selectedApps.value = current
         WeakNetVpnService.updateTargetApps(current)
+        if (isRunning.value) {
+            restartVpn()
+        }
+    }
+
+    private fun restartVpn() {
+        stopVpn()
+        val context = getApplication<Application>()
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            val intent = Intent(context, WeakNetVpnService::class.java)
+            context.startForegroundService(intent)
+        }, 500)
     }
 
     fun getInstalledApps(): List<AppInfo> {
