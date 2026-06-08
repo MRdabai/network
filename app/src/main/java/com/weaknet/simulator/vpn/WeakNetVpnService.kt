@@ -62,7 +62,14 @@ class WeakNetVpnService : VpnService() {
     private val udpSessions = ConcurrentHashMap<String, UdpSession>()
     private val tcpSessions = ConcurrentHashMap<String, TcpSession>()
     private val pendingWrites = ConcurrentLinkedQueue<PendingWrite>()
+    private val pendingRegistrations = ConcurrentLinkedQueue<PendingRegistration>()
     private val idGenerator = AtomicInteger(0)
+
+    private data class PendingRegistration(
+        val channel: java.nio.channels.SelectableChannel,
+        val ops: Int,
+        val attachment: String
+    )
 
     private data class UdpSession(
         val channel: DatagramChannel,
@@ -267,9 +274,8 @@ class WeakNetVpnService : VpnService() {
             val ch = DatagramChannel.open()
             ch.configureBlocking(false)
             protect(ch.socket())
-            val sel = selector ?: return
-            ch.register(sel, SelectionKey.OP_READ, key)
-            sel.wakeup()
+            pendingRegistrations.add(PendingRegistration(ch, SelectionKey.OP_READ, key))
+            selector?.wakeup()
             UdpSession(
                 channel = ch, key = key,
                 srcIp = srcIp, srcPort = srcPort,
@@ -303,7 +309,7 @@ class WeakNetVpnService : VpnService() {
             session.lastActive = System.currentTimeMillis()
 
             val eng = engine ?: return
-            val immediate = eng.processDownlinkPacket(response, response.size)
+            val immediate = eng.processDownlinkPacket(response, response.size, allowDrop = true)
             if (immediate) {
                 val output = tunOutput ?: return
                 synchronized(output) { output.write(response) }
@@ -419,9 +425,8 @@ class WeakNetVpnService : VpnService() {
                 )
                 tcpSessions[key] = session
 
-                val sel = selector ?: return@launch
-                ch.register(sel, SelectionKey.OP_CONNECT, key)
-                sel.wakeup()
+                pendingRegistrations.add(PendingRegistration(ch, SelectionKey.OP_CONNECT, key))
+                selector?.wakeup()
             } catch (e: Exception) {
                 Log.w(TAG, "TCP connect init error: ${e.message}")
                 tcpSessions.remove(key)
@@ -436,8 +441,8 @@ class WeakNetVpnService : VpnService() {
                 session.channel.finishConnect()
             }
             session.state = TcpState.ESTABLISHED
-            val sel = selector ?: return
-            session.channel.register(sel, SelectionKey.OP_READ, key)
+            pendingRegistrations.add(PendingRegistration(session.channel, SelectionKey.OP_READ, key))
+            selector?.wakeup()
 
             val synAck = buildTcpPacket(
                 session, TcpFlags.SYN or TcpFlags.ACK,
@@ -456,11 +461,12 @@ class WeakNetVpnService : VpnService() {
         val buf = ByteBuffer.allocate(MTU - 40)
         try {
             val read = session.channel.read(buf)
-            if (read <= 0) {
+            if (read == -1) {
                 sendTcpFin(session)
                 closeTcpSession(key)
                 return
             }
+            if (read == 0) return
             buf.flip()
             val payload = ByteArray(read)
             buf.get(payload)
@@ -473,7 +479,7 @@ class WeakNetVpnService : VpnService() {
             session.lastActive = System.currentTimeMillis()
 
             val eng = engine ?: return
-            val immediate = eng.processDownlinkPacket(pkt, pkt.size)
+            val immediate = eng.processDownlinkPacket(pkt, pkt.size, allowDrop = false)
             if (immediate) {
                 writeToTun(pkt)
             }
@@ -569,6 +575,15 @@ class WeakNetVpnService : VpnService() {
         val sel = selector ?: return
         while (scope?.isActive == true) {
             try {
+                while (true) {
+                    val reg = pendingRegistrations.poll() ?: break
+                    try {
+                        reg.channel.register(sel, reg.ops, reg.attachment)
+                    } catch (e: Exception) {
+                        Log.w(TAG, "register error: ${e.message}")
+                    }
+                }
+
                 val ready = sel.select(500)
                 if (ready == 0) continue
                 val keys = sel.selectedKeys().iterator()

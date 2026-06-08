@@ -45,17 +45,23 @@ class PacketEngine(
         return shapingDelay <= 0
     }
 
-    fun processDownlinkPacket(data: ByteArray, length: Int): Boolean {
+    fun processDownlinkPacket(data: ByteArray, length: Int, allowDrop: Boolean): Boolean {
         val profile = profileFlow.value
         updateBucketsIfNeeded(profile)
 
+        var networkDelay = computeDelay(profile)
+        val shapingDelay = downlinkBucket.consume(length)
+
         if (profile.lossRate > 0 && Random.nextFloat() < profile.lossRate) {
+            if (allowDrop) {
+                updateStats { it.copy(droppedPackets = it.droppedPackets + 1) }
+                return false
+            }
+            // TCP: simulate retransmission delay instead of dropping
+            networkDelay += 200 + Random.nextInt(300).toLong()
             updateStats { it.copy(droppedPackets = it.droppedPackets + 1) }
-            return false
         }
 
-        val networkDelay = computeDelay(profile)
-        val shapingDelay = downlinkBucket.consume(length)
         val totalDelay = networkDelay + shapingDelay
 
         if (totalDelay > 0) {
