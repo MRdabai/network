@@ -191,14 +191,27 @@ fun StatItem(label: String, value: String) {
 @Composable
 fun ProfileGrid(currentProfile: NetworkProfile, onSelect: (NetworkProfile) -> Unit) {
     val grouped = NetworkProfile.GROUPED
+    var infoCategory by remember { mutableStateOf<String?>(null) }
+
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         grouped.forEach { (category, profiles) ->
-            Text(
-                category,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    category,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(Modifier.width(4.dp))
+                Icon(
+                    Icons.Default.Info,
+                    contentDescription = "查看说明",
+                    modifier = Modifier
+                        .size(18.dp)
+                        .clickable { infoCategory = category },
+                    tint = MaterialTheme.colorScheme.outline
+                )
+            }
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -216,6 +229,35 @@ fun ProfileGrid(currentProfile: NetworkProfile, onSelect: (NetworkProfile) -> Un
                 }
             }
         }
+    }
+
+    infoCategory?.let { cat ->
+        val profiles = grouped[cat] ?: emptyList()
+        AlertDialog(
+            onDismissRequest = { infoCategory = null },
+            title = { Text("$cat 场景说明") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    profiles.forEach { p ->
+                        Column {
+                            Text(p.name, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            val lossPercent = (p.lossRate * 100).toInt()
+                            val bandwidth = if (p.downlinkKbps <= 0) "不限速"
+                                else if (p.downlinkKbps < 1024) "${p.downlinkKbps}kbps"
+                                else "${p.downlinkKbps / 1024}Mbps"
+                            Text(
+                                "延迟${p.latencyMs}ms  抖动${p.jitterMs}ms  丢包${lossPercent}%  $bandwidth",
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { infoCategory = null }) { Text("关闭") }
+            }
+        )
     }
 }
 
