@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -188,21 +187,34 @@ fun StatItem(label: String, value: String) {
     }
 }
 
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ProfileGrid(currentProfile: NetworkProfile, onSelect: (NetworkProfile) -> Unit) {
-    val profiles = NetworkProfile.PRESETS
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        items(profiles) { profile ->
-            val isSelected = profile.name == currentProfile.name
-            FilterChip(
-                selected = isSelected,
-                onClick = { onSelect(profile) },
-                label = { Text(profile.name) },
-                leadingIcon = if (isSelected) {
-                    { Icon(Icons.Default.Check, contentDescription = null, Modifier.size(16.dp)) }
-                } else null
+    val grouped = NetworkProfile.GROUPED
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        grouped.forEach { (category, profiles) ->
+            Text(
+                category,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.primary
             )
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                profiles.forEach { profile ->
+                    val isSelected = profile.name == currentProfile.name
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { onSelect(profile) },
+                        label = { Text(profile.name, fontSize = 13.sp) },
+                        leadingIcon = if (isSelected) {
+                            { Icon(Icons.Default.Check, contentDescription = null, Modifier.size(16.dp)) }
+                        } else null
+                    )
+                }
+            }
         }
     }
 }

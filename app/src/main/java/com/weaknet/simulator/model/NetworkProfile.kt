@@ -6,7 +6,8 @@ data class NetworkProfile(
     val jitterMs: Int,
     val lossRate: Float,
     val uplinkKbps: Long,
-    val downlinkKbps: Long
+    val downlinkKbps: Long,
+    val category: String = "通用"
 ) {
     companion object {
         val NORMAL = NetworkProfile("正常网络", 0, 0, 0f, 0, 0)
@@ -20,7 +21,20 @@ data class NetworkProfile(
         val UNSTABLE = NetworkProfile("断断续续", 1000, 2000, 0.10f, 512, 1024)
         val DISCONNECT = NetworkProfile("断网", 0, 0, 1.0f, 0, 0)
 
-        val PRESETS = listOf(NORMAL, WIFI_WEAK, G4, G4_WEAK, G3, G2, SUBWAY, HIGH_SPEED_RAIL, UNSTABLE, DISCONNECT)
+        val MX_CITY_4G = NetworkProfile("墨城4G", 70, 40, 0.01f, 0, 0, "墨西哥")
+        val MX_WEAK = NetworkProfile("墨西哥弱信号", 300, 200, 0.03f, 2048, 4096, "墨西哥")
+        val MX_RURAL = NetworkProfile("墨西哥农村", 500, 400, 0.05f, 512, 1024, "墨西哥")
+        val MX_CROSS_BORDER = NetworkProfile("跨境US", 150, 80, 0.02f, 0, 0, "墨西哥")
+        val MX_RAINY = NetworkProfile("墨西哥雨季", 400, 600, 0.08f, 1024, 2048, "墨西哥")
+
+        val PRESETS = listOf(
+            NORMAL, WIFI_WEAK, G4, G4_WEAK, G3, G2,
+            SUBWAY, HIGH_SPEED_RAIL, UNSTABLE, DISCONNECT,
+            MX_CITY_4G, MX_WEAK, MX_RURAL, MX_CROSS_BORDER, MX_RAINY
+        )
+
+        val GROUPED: Map<String, List<NetworkProfile>>
+            get() = PRESETS.groupBy { it.category }
     }
 
     val isThrottled: Boolean get() = this != NORMAL
