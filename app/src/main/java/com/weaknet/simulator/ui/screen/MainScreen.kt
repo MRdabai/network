@@ -23,6 +23,7 @@ import com.weaknet.simulator.ui.AppInfo
 
 @Composable
 fun MainScreen(
+    modifier: Modifier = Modifier,
     isRunning: Boolean,
     currentProfile: NetworkProfile,
     stats: TrafficStats,
@@ -37,7 +38,7 @@ fun MainScreen(
     var showAppSelector by remember { mutableStateOf(false) }
 
     LazyColumn(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
