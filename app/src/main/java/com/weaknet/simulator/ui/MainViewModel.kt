@@ -6,11 +6,14 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.net.VpnService
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.weaknet.simulator.model.NetworkProfile
 import com.weaknet.simulator.model.TrafficStats
 import com.weaknet.simulator.vpn.WeakNetVpnService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 data class AppInfo(
     val packageName: String,
@@ -29,7 +32,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _customProfile = MutableStateFlow(NetworkProfile.NORMAL)
     val customProfile: StateFlow<NetworkProfile> = _customProfile
 
+    private val _installedApps = MutableStateFlow<List<AppInfo>>(emptyList())
+    val installedApps: StateFlow<List<AppInfo>> = _installedApps
+
     val stats: StateFlow<TrafficStats> get() = WeakNetVpnService.statsFlow
+
+    init {
+        viewModelScope.launch(Dispatchers.IO) {
+            _installedApps.value = loadInstalledApps()
+        }
+    }
 
     fun selectProfile(profile: NetworkProfile) {
         WeakNetVpnService.updateProfile(profile)
@@ -78,7 +90,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }, 500)
     }
 
-    fun getInstalledApps(): List<AppInfo> {
+    private fun loadInstalledApps(): List<AppInfo> {
         val pm = getApplication<Application>().packageManager
         val packages = pm.getInstalledApplications(PackageManager.GET_META_DATA)
         return packages.map { info ->

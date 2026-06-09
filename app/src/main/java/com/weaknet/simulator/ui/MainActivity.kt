@@ -1,14 +1,13 @@
 package com.weaknet.simulator.ui
 
 import android.app.Activity
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.weaknet.simulator.ui.screen.MainScreen
 import com.weaknet.simulator.ui.theme.WeakNetTheme
@@ -26,6 +25,7 @@ class MainActivity : ComponentActivity() {
     private var pendingViewModel: MainViewModel? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         setContent {
             WeakNetTheme {
@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
                 val profile by vm.currentProfile.collectAsState()
                 val stats by vm.stats.collectAsState()
                 val selectedApps by vm.selectedApps.collectAsState()
-                val apps = remember { vm.getInstalledApps() }
+                val apps by vm.installedApps.collectAsState()
 
                 MainScreen(
                     isRunning = isRunning,
