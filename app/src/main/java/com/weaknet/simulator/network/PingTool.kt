@@ -2,6 +2,7 @@ package com.weaknet.simulator.network
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
 
 data class PingResult(
     val host: String,
@@ -18,20 +19,27 @@ object PingTool {
 
     suspend fun ping(host: String, count: Int = 4): Result<PingResult> = withContext(Dispatchers.IO) {
         try {
-            val process = Runtime.getRuntime().exec(arrayOf("ping", "-c", count.toString(), "-W", "5", host))
+            val pingBin = findPingBinary()
+                ?: return@withContext Result.failure(Exception("找不到 ping 命令"))
+
+            val cmd = arrayOf(pingBin, "-c", count.toString(), "-W", "5", host)
+            val process = Runtime.getRuntime().exec(cmd)
+
             val output = process.inputStream.bufferedReader().readText()
             val errorOutput = process.errorStream.bufferedReader().readText()
-            process.waitFor()
+            val exitCode = process.waitFor()
 
-            if (output.isBlank()) {
-                return@withContext Result.failure(Exception(errorOutput.ifBlank { "Ping failed: no response" }))
+            if (output.isBlank() && exitCode != 0) {
+                return@withContext Result.failure(
+                    Exception(errorOutput.ifBlank { "Ping 失败 (exit code: $exitCode)" })
+                )
             }
 
             val statsRegex = Regex("""(\d+) packets transmitted, (\d+) (?:packets )?received.*?(\d+(?:\.\d+)?)% packet loss""")
             val statsMatch = statsRegex.find(output)
 
             val rttRegex = Regex("""rtt min/avg/max/mdev = ([\d.]+)/([\d.]+)/([\d.]+)/([\d.]+)""")
-            val rttAlt = Regex("""min/avg/max/(?:mdev|stddev) = ([\d.]+)/([\d.]+)/([\d.]+)""")
+            val rttAlt = Regex("""(?:min/avg/max/(?:mdev|stddev)|round-trip min/avg/max/stddev) = ([\d.]+)/([\d.]+)/([\d.]+)""")
             val rttMatch = rttRegex.find(output) ?: rttAlt.find(output)
 
             val transmitted = statsMatch?.groupValues?.get(1)?.toIntOrNull() ?: count
@@ -46,5 +54,14 @@ object PingTool {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    private fun findPingBinary(): String? {
+        val candidates = listOf("/system/bin/ping", "/system/xbin/ping", "ping")
+        for (path in candidates) {
+            if (path == "ping") return path
+            if (File(path).exists()) return path
+        }
+        return "ping"
     }
 }
