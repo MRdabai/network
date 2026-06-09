@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.weaknet.simulator.BuildConfig
 import kotlinx.coroutines.delay
 
 @Composable
@@ -100,7 +101,7 @@ fun SplashScreen(onFinished: () -> Unit) {
 
         // 底部版本号
         Text(
-            "v1.1.0",
+            "v${BuildConfig.VERSION_NAME}",
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 32.dp)
