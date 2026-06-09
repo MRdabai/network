@@ -395,6 +395,8 @@ class WeakNetVpnService : VpnService() {
                 val buf = ByteBuffer.wrap(packet, payloadOffset, payloadLength)
                 session.channel.write(buf)
                 session.ackNum = seqNum + payloadLength
+                val ack = buildTcpPacket(session, TcpFlags.ACK, session.seqNum, session.ackNum, null)
+                writeToTun(ack)
             } catch (e: Exception) {
                 Log.w(TAG, "TCP write error: ${e.message}")
                 sendTcpRst(session, packet, ipHeaderLen)
