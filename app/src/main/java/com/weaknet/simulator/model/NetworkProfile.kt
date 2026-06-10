@@ -19,6 +19,7 @@ data class NetworkProfile(
         val SUBWAY = NetworkProfile("地铁/电梯", 1500, 1000, 0.05f, 512, 1024)
         val HIGH_SPEED_RAIL = NetworkProfile("高铁", 800, 1000, 0.03f, 1024, 2048)
         val UNSTABLE = NetworkProfile("断断续续", 1000, 2000, 0.10f, 512, 1024)
+        val UNSTABLE_PLUS = NetworkProfile("断断续续+", 2000, 3000, 0.20f, 256, 512)
         val DISCONNECT = NetworkProfile("断网", 0, 0, 1.0f, 0, 0)
 
         val MX_CITY_4G = NetworkProfile("墨城4G", 200, 100, 0.01f, 0, 0, "墨西哥")
@@ -29,7 +30,7 @@ data class NetworkProfile(
 
         val PRESETS = listOf(
             NORMAL, WIFI_WEAK, G4, G4_WEAK, G3, G2,
-            SUBWAY, HIGH_SPEED_RAIL, UNSTABLE, DISCONNECT,
+            SUBWAY, HIGH_SPEED_RAIL, UNSTABLE, UNSTABLE_PLUS, DISCONNECT,
             MX_CITY_4G, MX_WEAK, MX_RURAL, MX_CROSS_BORDER, MX_RAINY
         )
 
