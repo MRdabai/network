@@ -99,6 +99,8 @@ class PacketEngine(
         if (profile != lastProfile) {
             uplinkBucket.updateRate(profile.uplinkKbps)
             downlinkBucket.updateRate(profile.downlinkKbps)
+            uplinkQueue.clear()
+            downlinkQueue.clear()
             lastProfile = profile
         }
     }
