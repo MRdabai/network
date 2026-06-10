@@ -76,8 +76,9 @@ fun AuthScreen(
                 }
             }
         } else {
+            @Suppress("DEPRECATION")
             LinearProgressIndicator(
-                progress = { remainingSeconds / 30f },
+                progress = remainingSeconds / 30f,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(3.dp),
                 color = if (remainingSeconds <= 5) MaterialTheme.colorScheme.error
                     else MaterialTheme.colorScheme.primary
