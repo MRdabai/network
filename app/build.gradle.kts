@@ -11,8 +11,8 @@ android {
         applicationId = "com.weaknet.simulator"
         minSdk = 24
         targetSdk = 34
-        versionCode = 9
-        versionName = "1.2.4"
+        versionCode = 10
+        versionName = "1.3.0"
     }
 
     buildTypes {
@@ -62,4 +62,6 @@ dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("androidx.security:security-crypto:1.0.0")
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
 }

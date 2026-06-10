@@ -2,11 +2,13 @@ package com.weaknet.simulator.ui
 
 import android.app.Activity
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.NetworkCheck
 import androidx.compose.material.icons.filled.SignalCellularAlt
 import androidx.compose.material3.*
@@ -15,14 +17,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.weaknet.simulator.ui.screen.AuthScreen
 import com.weaknet.simulator.ui.screen.DiagnosticsScreen
 import com.weaknet.simulator.ui.screen.MainScreen
+import com.weaknet.simulator.ui.screen.QrScanLauncher
 import com.weaknet.simulator.ui.screen.SplashScreen
 import com.weaknet.simulator.ui.theme.WeakNetTheme
 
 private enum class Tab(val label: String, val icon: ImageVector) {
     SIMULATION("弱网模拟", Icons.Default.SignalCellularAlt),
-    DIAGNOSTICS("网络诊断", Icons.Default.NetworkCheck)
+    DIAGNOSTICS("网络诊断", Icons.Default.NetworkCheck),
+    AUTHENTICATOR("验证器", Icons.Default.Key)
 }
 
 class MainActivity : ComponentActivity() {
@@ -121,6 +126,43 @@ class MainActivity : ComponentActivity() {
                         onRunPing = { host, count -> diagVm.runPing(host, count) },
                         onRunDns = { host, server -> diagVm.runDns(host, server) }
                     )
+                }
+                Tab.AUTHENTICATOR -> {
+                    val authVm: AuthViewModel = viewModel()
+                    val accounts by authVm.accounts.collectAsState()
+                    val codes by authVm.codes.collectAsState()
+                    val remaining by authVm.remainingSeconds.collectAsState()
+                    var scanning by remember { mutableStateOf(false) }
+
+                    AuthScreen(
+                        modifier = Modifier.padding(innerPadding),
+                        accounts = accounts,
+                        codes = codes,
+                        remainingSeconds = remaining,
+                        onAddManual = { issuer, account, secret ->
+                            authVm.addAccount(issuer, account, secret)
+                        },
+                        onAddFromUri = { uri -> authVm.addFromUri(uri) },
+                        onDelete = { authVm.deleteAccount(it) },
+                        onCopy = { authVm.copyCode(it) },
+                        onScanQr = { scanning = true }
+                    )
+
+                    if (scanning) {
+                        QrScanLauncher { result ->
+                            scanning = false
+                            if (result != null) {
+                                val success = authVm.addFromUri(result)
+                                if (!success) {
+                                    Toast.makeText(
+                                        this@MainActivity,
+                                        "无效的验证器二维码",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
