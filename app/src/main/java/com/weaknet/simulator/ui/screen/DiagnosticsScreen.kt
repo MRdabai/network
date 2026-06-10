@@ -131,9 +131,7 @@ private fun PingCard(state: PingState, onRun: (String, Int) -> Unit) {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 if (state.isRunning) {
-                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = Color.White)
-                    Spacer(Modifier.width(8.dp))
-                    Text("测试中...")
+                    Text("⏳ 测试中...")
                 } else {
                     Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(4.dp))
@@ -289,9 +287,7 @@ private fun DnsCard(state: DnsState, onRun: (String, String?) -> Unit) {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 if (state.isRunning) {
-                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = Color.White)
-                    Spacer(Modifier.width(8.dp))
-                    Text("查询中...")
+                    Text("⏳ 查询中...")
                 } else {
                     Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(4.dp))
