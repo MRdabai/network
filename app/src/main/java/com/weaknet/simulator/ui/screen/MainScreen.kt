@@ -214,17 +214,18 @@ fun ProfileGrid(currentProfile: NetworkProfile, onSelect: (NetworkProfile) -> Un
                 )
             }
             FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 profiles.forEach { profile ->
                     val isSelected = profile.name == currentProfile.name
                     FilterChip(
                         selected = isSelected,
                         onClick = { onSelect(profile) },
-                        label = { Text(profile.name, fontSize = 13.sp) },
+                        label = { Text(profile.name, fontSize = 12.sp) },
+                        modifier = Modifier.height(30.dp),
                         leadingIcon = if (isSelected) {
-                            { Icon(Icons.Default.Check, contentDescription = null, Modifier.size(16.dp)) }
+                            { Icon(Icons.Default.Check, contentDescription = null, Modifier.size(14.dp)) }
                         } else null
                     )
                 }
